@@ -18,7 +18,7 @@ void create_index(void **m, int rows, int cols, size_t sizeElement){
     }
 }
 
-void print_matriz(int **matrix, int Rows, int Cols){
+void print_matrix(int **matrix, int Rows, int Cols){
     printf("\n");
         for(int i=0; i<Rows; i++){
             for(int j=0; j<Cols; j++)
@@ -50,5 +50,5 @@ int main(int argc, char **argv){
     for(int i=0; i<4; i++){
         for(int j=0; j<6; j++) matrix[i][j] = z[i][j];
     }
-    print_matriz(matrix, Rows, Cols);
+    print_matrix(matrix, Rows, Cols);
 }
