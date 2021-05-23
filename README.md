@@ -162,5 +162,5 @@ dalam fungsi ini untuk mengubah penamaanfile dan ekstensi yang susai dan masuk p
 pengerjaan soal ini dilakukan pada masa timeline revisi sehingga tidak terinput pada submit praktikum yang sebenernya dikarenakan kurangnya waktu dari pihak yang mengerjakan (Afifan S Yahya).  
   
 ### contoh output untuk argumen \*
+![image](https://user-images.githubusercontent.com/75328763/119264534-d0496600-bc0d-11eb-9818-92503345ae46.png)
 
-  
