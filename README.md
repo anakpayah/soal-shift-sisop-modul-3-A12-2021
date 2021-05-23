@@ -97,6 +97,9 @@ void *fact(void* arg){
 ```
 ### Kendala
 Sebelumnya kita tidak bisa melakukan faktorial untuk angka besar karena menggunakan data type int. Setelah revisi kita mengubah beberapa variabel untuk menggunakan data type unsigned long long supaya bisa melakukan faktorial sampai angka 20.
+### Screenshot Output
+![image](https://user-images.githubusercontent.com/7587945/119265387-b65d5280-bc10-11eb-8768-2378a82d66c2.png)
+
 ### Soal 2c
 ```c
   if (pipe(fd1) == -1) {
@@ -152,6 +155,9 @@ Sebelumnya kita tidak bisa melakukan faktorial untuk angka besar karena mengguna
   }
 ```
 Di sini terdapat dua pipe, yaitu fd1[2] dan fd2[2]. Alur program ini adalah buat pipe fd1 -> fork -> write ke fd1 -> exec "ps aux" -> buat pipe fd2 -> fork -> read dari fd1 -> write ke fd2 -> exec "sort -nlk" -> fork -> read dari fd2 -> exec "head -5".
+### Screenshot Output
+![image](https://user-images.githubusercontent.com/7587945/119265407-cecd6d00-bc10-11eb-87cf-1a59e1248059.png)
+
 
 
 <hr>
