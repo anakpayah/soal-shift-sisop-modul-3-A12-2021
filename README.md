@@ -9,6 +9,149 @@
 <hr>
 
 ## Soal nomor 2
+### Penjelasan Soal
+Untuk soal 2a, kita perlu mengkalikan dua matriks 4x3 dan 3x6 yang diinput dan print hasilnya. Untuk soal 2b, kita perlu mengambil matriks hasil soal 2a (matriks a) menggunakan shared memory dan melakukan perhitungan dengan matriks input baru. Setiap cel dari matriks a akan diperhitungkan dengan cel pada matriks b menggunakan thread dengan ketentuan sebagai berikut:  
+If a >= b  -> a!/(a-b)!  
+If b > a -> a!  
+If 0 -> 0  
+Untuk soal 2c, kita perlu menggunakan pipe untuk mengeksekusi command “ps aux | sort -nrk 3,3 | head -5”.  
+### Soal 2a
+```c
+    key_t key = 1234;
+    size_t sizeMatrix = sizeof_dm(Rows,Cols,sizeof(int));
+    shmId = shmget(key, sizeMatrix, IPC_CREAT|0666);    
+    matrix = shmat(shmId, NULL, 0); 
+    create_index((void*)matrix, Rows, Cols, sizeof(int));
+
+    int x[4][3], y[3][6], z[4][6];
+    for(int i=0; i<4; i++){
+        for(int j=0; j<3; j++) scanf("%d",&x[i][j]);
+    }
+    for(int i=0; i<3; i++){
+        for(int j=0; j<6; j++) scanf("%d",&y[i][j]);
+    }
+    for(int i=0; i<4; i++){
+        for(int j=0; j<6; j++) z[i][j] = x[i][0] * y[0][j] + x[i][1] * y[1][j] + x[i][2] * y[2][j];
+    }
+    for(int i=0; i<4; i++){
+        for(int j=0; j<6; j++) matrix[i][j] = z[i][j];
+    }
+    print_matrix(matrix, Rows, Cols);
+``` 
+Untuk melakukan write ke shared memory, kita perlu key dimana disini kita beri key = 1234, shmid yang didapatkan menggunakan shmget, dan kita perlu mengattach data yang ingin diwrite ke shared memory menggunakan shmat. Kita tidak bisa mengattach data array 2 dimensi menggunakan shmat sehingga kita perlu mengattach array 1 dimensi dan array tersebut diubah menjadi array 2 dimensi setelah diattach ke shared memory. Setelah itu kita scan matriks input dan mengalikan matriks tersebut dan menyimpan matriks hasil ke variabel "matrix[][]" yang sudah diattach ke shared memory.  
+### Soal 2b
+```c
+    key_t key = 1234;
+    size_t sizeMatrix = sizeof_dm(Rows,Cols,sizeof(int));
+    shmId = shmget(key, sizeMatrix, IPC_CREAT|0600);    
+    matrix = shmat(shmId, NULL, 0); 
+    create_index((void*)matrix, Rows, Cols, sizeof(int));
+    
+    int b[4][6];
+    for(int i=0; i<4; i++){
+        for(int j=0; j<6; j++) scanf("%d",&b[i][j]);
+    }
+
+    pthread_t *threads;
+    threads = (pthread_t*)malloc(24*sizeof(pthread_t));
+      
+    int count = 0;
+    int* data = NULL;
+    for (int i = 0; i < 4; i++){
+        for (int j = 0; j < 6; j++){
+            data = (int *)malloc((2)*sizeof(int));
+            data[0] = matrix[i][j];
+            data[1] = b[i][j];
+               
+            pthread_create(&threads[count++], NULL, fact, (void*)(data));
+        }
+    }
+    for (int i = 0; i < 24; i++) 
+    {
+        void *k;
+        pthread_join(threads[i], &k);
+        unsigned long long *p = (unsigned long long *)k;
+        printf("%llu ",*p);
+        if ((i + 1) % 6 == 0)
+            printf("\n");
+    }
+```
+Proses menggunakan shared memory sama seperti soal 2a. Kita scan input matriks (matriks b) dan membuat thread. Kita membuat array data dimana data[0] menyimpan cel matriks a dan data[1] menyimpan cel matriks b, kemudian kita memggunakan pthread_create untuk memanggil fungsi faktorial. Setelah itu kita menggabungkan thread dengan pthread_join dan menampilkan hasilnya. Fungsi faktorial (fact()) adalah sebagai berikut:
+```c
+void *fact(void* arg){
+    int *data = (int *)arg;
+    unsigned long long k = 1;
+    if(data[0] == 0 || data[1] == 0) k = 0;
+    else if(data[0] >= data[1]){
+        for(int i=data[0]; i>(data[0]-data[1]); i--) k *= i;
+    }
+    else if(data[1] > data[0]){
+        for(int i=data[0]; i>1; i--) k *= i;
+    }
+      
+    unsigned long long *p = (unsigned long long*)malloc(sizeof(unsigned long long));
+         *p = k;
+
+    pthread_exit(p);
+}
+```
+### Kendala
+Sebelumnya kita tidak bisa melakukan faktorial untuk angka besar karena menggunakan data type int. Setelah revisi kita mengubah beberapa variabel untuk menggunakan data type unsigned long long supaya bisa melakukan faktorial sampai angka 20.
+### Soal 2c
+```c
+  if (pipe(fd1) == -1) {
+    perror("Pipe Failed");
+    exit(1);
+  }
+
+  if ((pid = fork()) == -1) {
+    perror("Fork Failed");
+    exit(1);
+  } 
+  else if (pid == 0) {
+    dup2(fd1[1], 1);
+    close(fd1[0]);
+    close(fd1[1]);
+    execlp("ps", "ps", "aux", NULL);
+    _exit(1);
+  }
+
+  if (pipe(fd2) == -1) {
+    perror("Pipe Failed");
+    exit(1);
+  }
+
+  if ((pid = fork()) == -1) {
+    perror("Fork Failed");
+    exit(1);
+  } 
+  else if (pid == 0) {
+    dup2(fd1[0], 0);
+    dup2(fd2[1], 1);
+    close(fd1[0]);
+    close(fd1[1]);
+    close(fd2[0]);
+    close(fd2[1]);
+    execlp("sort", "sort", "-nrk", "3,3", NULL);
+    _exit(1);
+  }
+
+  close(fd1[0]);
+  close(fd1[1]);
+
+  if ((pid = fork()) == -1) {
+    perror("Fork Failed");
+    exit(1);
+  } 
+  else if (pid == 0) {
+    dup2(fd2[0], 0);
+    close(fd2[0]);
+    close(fd2[1]);
+    execlp("head", "head", "-5", NULL);
+    _exit(1);
+  }
+```
+Di sini terdapat dua pipe, yaitu fd1[2] dan fd2[2]. Alur program ini adalah buat pipe fd1 -> fork -> write ke fd1 -> exec "ps aux" -> buat pipe fd2 -> fork -> read dari fd1 -> write ke fd2 -> exec "sort -nlk" -> fork -> read dari fd2 -> exec "head -5".
 
 
 <hr>
